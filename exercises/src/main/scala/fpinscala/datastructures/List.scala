@@ -8,6 +8,7 @@ which may be `Nil` or another `Cons`.
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
 
 object List { // `List` companion object. Contains functions for creating and working with lists.
+
   def sum(ints: List[Int]): Int = ints match { // A function that uses pattern matching to add up a list of integers
     case Nil => 0 // The sum of the empty list is 0.
     case Cons(x,xs) => x + sum(xs) // The sum of a list starting with `x` is `x` plus the sum of the rest of the list.
@@ -50,15 +51,34 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 
-  def tail[A](l: List[A]): List[A] = sys.error("todo")
+  def tail[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case Cons(_, xs) => xs
+  }
 
-  def setHead[A](l: List[A], h: A): List[A] = sys.error("todo")
+  val bb = List(1,2,3,4, 66, -1)
 
-  def drop[A](l: List[A], n: Int): List[A] = sys.error("todo")
+  def setHead[A](l: List[A], h: A): List[A] = 
+    Cons(h, tail(l))
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = sys.error("todo")
+  def drop[A](l: List[A], n: Int): List[A] = n match {
+    case 1 => tail(l)
+    case nn => drop(tail(l), n-1)
+  }
 
-  def init[A](l: List[A]): List[A] = sys.error("todo")
+  def f(a: Int) = a > 0
+  def g(a: Int) = a < 100
+  
+  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = l match {
+    case Cons(x, xs) => if(f(x)) dropWhile(xs, f) else l
+    case Nil => Nil
+  }
+
+  def init[A](l: List[A]): List[A] = l match {
+    case Cons(x, Nil) => l
+    case Cons(x, xs) => init(xs)
+    case Nil => Nil
+  }
 
   def length[A](l: List[A]): Int = sys.error("todo")
 

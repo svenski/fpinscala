@@ -68,38 +68,54 @@ object List { // `List` companion object. Contains functions for creating and wo
     case Nil => Nil
   }
 
-  def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B = // Utility functions
-    as match {
-      case Nil => z
-      case Cons(x, xs) => f(x, foldRight(xs, z)(f))
-    }
-
   val e38 = foldRight(List(1,2,3), Nil:List[Int])(Cons(_,_))
 
-  def sum2(ns: List[Int]) =
-    foldRight(ns, 0)((x,y) => x + y)
-
-  def product2(ns: List[Double]) =
-    foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
+  def sum2(ns: List[Int]) = foldRight(ns, 0)(_ + _)
+  def product2(ns: List[Int]) = foldRight(ns, 1)(_ * _)
 
   def length[A](l: List[A]): Int = {
     foldRight(l, 0)( (x,y) => y + 1)
   }
 
-  
-  //def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
-   // def go[A](l: List[A], acc: B): B = l match {
-    //  case Nil => acc
-     // case Cons(x, xs) => go(xs, f(acc, x))
-   // }
-    //go(l, z)
- // }
 
+  def foldRight[A,B](as: List[A], z: B)(f: (A, B) => B): B = as match {
+      case Nil => z
+      case Cons(x, xs) => f(x, foldRight(xs, z)(f))
+  }
 
   def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = l match {
     case Nil => z
     case Cons(x, xs) => foldLeft(xs, f(z, x))(f) 
   }
 
+  def sumLeft(ns: List[Int]) = foldLeft(ns, 0)(_ + _)
+  def productLeft(ns: List[Int]) = foldLeft(ns, 1)(_ * _)
+  def lengthLeft(ns: List[Int]) = foldLeft(ns, 0) ((acc,x) => acc +1)
+
+  def rev(l: List[Int]) = foldLeft(l, Nil:List[Int])((acc, x) => Cons(x,acc))
+
+  //def rev(l: List[Int]) = foldLeft(l, Nil:List[Int])((acc, x) => Cons(x,acc))
+
+  def foldLeftUsingFoldRight[A,B](l: List[A], z: B) (f: (B, A) => B): B = {
+   // the type we will accumulate
+    type Acc = B => B
+
+    // initial value (param `z`) for foldRight, of the Acc type
+    def initial: Acc = identity // aka (x => x), discuss this
+
+    // function (param `f`) for foldRight, which builds the Acc type
+    def step(a_right: A, acc: Acc): Acc = (b_left: B) => acc(f(b_left, a_right))
+
+    // accumulates a function:
+    val g = foldRight(l, initial)(step)
+
+    g(z)
+  }
+  
+
+  def foldRightUsingFoldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
+
+  }
+  
   def map[A,B](l: List[A])(f: A => B): List[B] = sys.error("todo")
 }

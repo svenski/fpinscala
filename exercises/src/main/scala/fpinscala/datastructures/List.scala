@@ -32,8 +32,7 @@ object List { // `List` companion object. Contains functions for creating and wo
     case _ => 101
   }
 
-  def append[A](a1: List[A], a2: List[A]): List[A] =
-    a1 match {
+  def append[A](a1: List[A], a2: List[A]): List[A] = a1 match {
       case Nil => a2
       case Cons(h,t) => Cons(h, append(t, a2))
     }
@@ -113,9 +112,44 @@ object List { // `List` companion object. Contains functions for creating and wo
   }
   
 
-  def foldRightUsingFoldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
+  //def foldRightUsingFoldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
+  //}
+  
+  def appendFold[A](a1: List[A], a2: List[A]): List[A] = 
+    foldRight(a1, a2)(Cons(_,_))
 
+
+  def addOneTo(l: List[Int]): List[Int] = 
+    foldRight(l, Nil:List[Int])( (x, acc) => Cons(x + 1, acc) )
+
+  def ListDblToString(l: List[Double]): List[String] =
+    foldRight(l, Nil:List[String])( (x, acc) => Cons(x.toString, acc))
+  
+  def map[A,B](l: List[A])(f: A => B): List[B] = 
+    foldRight(l, Nil:List[B])( (x, acc) => Cons(f(x), acc))
+
+  val useMap = map(List(1.2, 2, 3))( x => x.toString )
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] = {
+    foldRight(as, Nil:List[A])( (x, t) => if(f(x)) Cons(x, t) else t)
+  }
+
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] = 
+    foldRight(as, Nil:List[B])( (x, acc) => append(f(x), acc))
+
+  def filterUsingFlatMap[A](as: List[A])(f: A => Boolean): List[A] = 
+    flatMap(as)( x => if(f(x)) List(x) else Nil)
+
+  def addLists(l: List[Int], r: List[Int]): List[Int] = (l,r) match {
+    case (_, Nil) => Nil
+    case (Nil, _) => Nil
+    case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1 + h2, addLists(t1, t2))
   }
   
-  def map[A,B](l: List[A])(f: A => B): List[B] = sys.error("todo")
+  def zipWith[A,B](l: List[A], r: List[B], f: (A, A) => B): List[B] = (l,r) match {
+    case (_, Nil) => Nil
+    case (Nil, _) => Nil
+    case (Cons(h1:A, t1), Cons(h2:A, t2)) => Cons(f(h1, h2), zipWith(t1, t2, f))
+  }
+
 }

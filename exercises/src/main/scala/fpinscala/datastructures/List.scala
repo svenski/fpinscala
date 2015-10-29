@@ -115,9 +115,13 @@ object List { // `List` companion object. Contains functions for creating and wo
   //def foldRightUsingFoldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = {
   //}
   
+
+
   def appendFold[A](a1: List[A], a2: List[A]): List[A] = 
     foldRight(a1, a2)(Cons(_,_))
 
+  def concat[A](l: List[List[A]]): List[A] = 
+    foldRight(l, Nil:List[A])(append)
 
   def addOneTo(l: List[Int]): List[Int] = 
     foldRight(l, Nil:List[Int])( (x, acc) => Cons(x + 1, acc) )
@@ -126,7 +130,7 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(l, Nil:List[String])( (x, acc) => Cons(x.toString, acc))
   
   def map[A,B](l: List[A])(f: A => B): List[B] = 
-    foldRight(l, Nil:List[B])( (x, acc) => Cons(f(x), acc))
+    foldRight(l, Nil:List[B])((x, acc) => Cons(f(x), acc))
 
   val useMap = map(List(1.2, 2, 3))( x => x.toString )
 
@@ -146,10 +150,31 @@ object List { // `List` companion object. Contains functions for creating and wo
     case (Cons(h1, t1), Cons(h2, t2)) => Cons(h1 + h2, addLists(t1, t2))
   }
   
-  def zipWith[A,B](l: List[A], r: List[B], f: (A, A) => B): List[B] = (l,r) match {
+  def zipWith[A,B,C](l: List[A], r: List[B])( f: (A, B) => C): List[C] = (l,r) match {
     case (_, Nil) => Nil
     case (Nil, _) => Nil
-    case (Cons(h1:A, t1), Cons(h2:A, t2)) => Cons(f(h1, h2), zipWith(t1, t2, f))
+    case (Cons(h1, t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1, t2)( f))
+  }
+
+  // o
+  def hasSubsequenceBySergiusz2[A](sup: List[A], sub: List[A]): Boolean = {
+    (sup, sub) match {
+      case (Nil, _) => false
+      case (_, Nil) => true
+      case (Cons(h1, t1), Cons(h2, t2)) =>
+        val sufficientLength = length(sup) >= length(sub)
+        val isPrefix = sufficientLength && foldLeft(zipWith(sup, sub)(_ == _), true)(_ && _)
+
+        isPrefix || hasSubsequenceBySergiusz2(t1, sub)
+    }
+  }
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = {
+    (sup, sub) match {
+      case (Nil, Nil) => true
+      case(Nil, _) => false
+      case(_, Nil) => true
+      case(Cons(h1, t1), Cons(h2, t2)) => if(h1 == h2) hasSubsequence(t1, t2) else hasSubsequence(t1, sub)
+    }
   }
 
 }

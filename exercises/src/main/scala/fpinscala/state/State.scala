@@ -1,5 +1,3 @@
-package fpinscala.state
-
 
 trait RNG {
   def nextInt: (Int, RNG) // Should generate a random `Int`. We'll later define other functions in terms of `nextInt`.
@@ -30,17 +28,52 @@ object RNG {
       (f(a), rng2)
     }
 
-  def nonNegativeInt(rng: RNG): (Int, RNG) = ???
+  def nonNegativeInt(rng: RNG): (Int, RNG) = rng.nextInt match {
+    case (Int.MinValue, nextRng) => nonNegativeInt(nextRng)
+    case(int: Int, nextRng: RNG) => (math.abs(int), nextRng)
+  }
 
-  def double(rng: RNG): (Double, RNG) = ???
+  // Double between 0 and 1
+  def double(rng: RNG): (Double, RNG) = nonNegativeInt(rng) match {
+    case (Int.MaxValue, nRng) => double(nRng)
+    case(int, nRng) => (int/Int.MaxValue.toDouble, nRng)
+  }
 
-  def intDouble(rng: RNG): ((Int,Double), RNG) = ???
+  //
+  def intDouble(rng: RNG): ((Int,Double), RNG) = {
+    //rng.nextInt.map ( (int, rr) => (int, double(rr)))
+    val (int, rr)  = rng.nextInt
+    val (dd, rr2) = double(rr)
 
-  def doubleInt(rng: RNG): ((Double,Int), RNG) = ???
+    ((int, dd), rr2)
+  }
 
-  def double3(rng: RNG): ((Double,Double,Double), RNG) = ???
+  def doubleInt(rng: RNG): ((Double,Int), RNG) = {
+    val ((i,d),r) = intDouble(rng)
+    ((d,i), r)
+  }
 
-  def ints(count: Int)(rng: RNG): (List[Int], RNG) = ???
+  def double3(rng: RNG): ((Double,Double,Double), RNG) = {
+    val (dd, r) = double(rng)
+    val (dd2, r1) = double(r)
+    val (dd3, r2) = double(r1)
+
+    ((dd, dd2, dd3), r2)
+  }
+
+  def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
+
+    def go(count: Int, acc: List[Int])(rng: RNG) : (List[Int], RNG) = (count, rng.nextInt) match {
+      case (0, _) => (acc, rng)
+      case (x, (int, rr)) => go(x -1, int::acc)(rr)
+    }
+
+    go(count, Nil: List[Int])(rng)
+  }
+
+
+
+
 
   def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
 

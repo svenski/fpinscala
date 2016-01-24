@@ -71,16 +71,66 @@ object RNG {
     go(count, Nil: List[Int])(rng)
   }
 
+  def doubleUsingMap: Rand[Double] = {
+    map(int)( _/(Int.MaxValue.toDouble +1))
+  }
 
+  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = {
+    rng => {
+      val (a, rng1) = ra(rng)
+      val (b, rng2) = rb(rng1)
+      (f(a,b), rng2)
+    }
+  }
 
+  def both[A,B](ra: Rand[A], rb: Rand[B]): Rand[(A,B)] = 
+    map2(ra,rb)((_, _))
 
+  def intDouble2: Rand[(Int,Double)] = 
+    both(int, doubleUsingMap)
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = {
+    
+    def go(in: List[Rand[A]], acc: Rand[List[A]]): Rand[List[A]] = in match {
+      case h::t => go(t, map2(h, acc) ((a,b) => a::b))
+      case Nil => acc
+    }
 
-  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = ???
+    go(fs, rng => (Nil:List[A], rng))
+  }
 
-  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = ???
+  // Opposite direction!
+  def intsUsingSeq(n: Int): Rand[List[Int]] = sequence(List.fill(n)(int))
+
+  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = {
+    rng => {
+      val (a, r1) = f(rng)
+      g(a)(r1)
+    }
+  }
+
+  def nonNegativeLessThan(x: Int) : Rand[Int] = {
+
+    def nn(x: Int)(in: Int): Rand[Int] = {
+      rng => {
+        val mod = in % x
+        if (in + (x-1) - mod >= 0)
+          (mod, rng)
+        else nonNegativeLessThan(x)(rng)
+      }
+    }
+
+    flatMap(int)(nn(x))
+  }
+
+  def mapUsingFlatMap[A, B](s: Rand[A])(f: A => B): Rand[B] = 
+    flatMap(s)( x => rng => (f(x), rng))
+
+  def doubleUsingMap2: Rand[Double] = {
+    mapUsingFlatMap(int)( _/(Int.MaxValue.toDouble +1))
+  }
 }
+
 
 case class State[S,+A](run: S => (A, S)) {
   def map[B](f: A => B): State[S, B] =

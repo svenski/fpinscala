@@ -1,0 +1,2 @@
+
+  val rr = RNG.Simple(3)

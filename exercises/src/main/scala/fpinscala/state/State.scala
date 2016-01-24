@@ -129,7 +129,12 @@ object RNG {
   def doubleUsingMap2: Rand[Double] = {
     mapUsingFlatMap(int)( _/(Int.MaxValue.toDouble +1))
   }
+
+  def rollDie: Rand[Int] = 
+    map(nonNegativeLessThan(6))(_ + 1)
+
 }
+
 
 
 case class State[S,+A](run: S => (A, S)) {

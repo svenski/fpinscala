@@ -1,4 +1,3 @@
-package fpinscala.laziness
 
 import Stream._
 trait Stream[+A] {
@@ -12,18 +11,37 @@ trait Stream[+A] {
   def exists(p: A => Boolean): Boolean = 
     foldRight(false)((a, b) => p(a) || b) // Here `b` is the unevaluated recursive step that folds the tail of the stream. If `p(a)` returns `true`, `b` will never be evaluated and the computation terminates early.
 
+  def toList: List[A] = this match {
+    case Cons(h, t) => h()::t().toList
+    case _ => List()
+  }
+
   @annotation.tailrec
   final def find(f: A => Boolean): Option[A] = this match {
     case Empty => None
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
   }
-  def take(n: Int): Stream[A] = sys.error("todo")
+
+  def take(n: Int): Stream[A] = this match {
+    case Cons(h, t) if n > 1 => cons(h(), t().take(n -1))
+    case Cons(h, _) if n == 1 => cons(h(), empty)
+    case _ => empty
+  }
 
   def drop(n: Int): Stream[A] = sys.error("todo")
 
-  def takeWhile(p: A => Boolean): Stream[A] = sys.error("todo")
+  def takeWhile(p: A => Boolean): Stream[A] = this match {
+    case Cons(h,t) if(p(h())) => cons(h(), t().takeWhile(p)) 
+    case Empty => empty
+  }
 
-  def forAll(p: A => Boolean): Boolean = sys.error("todo")
+  //def takeWhileUsingFoldright(p: A  => Boolean): Stream[A] = 
+
+  def forAll(p: A => Boolean): Boolean = this match {
+    case Cons(h,t) if(p(h())) => false 
+    case Cons(_, t) => t().forAll(p)
+    case _ => true
+  }
 
   def headOption: Option[A] = sys.error("todo")
 
